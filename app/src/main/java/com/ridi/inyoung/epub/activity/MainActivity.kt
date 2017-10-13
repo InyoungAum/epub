@@ -2,23 +2,20 @@ package com.ridi.inyoung.epub.activity
 
 import android.app.Activity
 import android.os.Bundle
-import android.support.v4.content.FileProvider
-import android.util.Log
 import android.webkit.WebView
+import com.ridi.books.helper.Log
 import com.ridi.books.helper.view.findLazy
 import com.ridi.inyoung.epub.EPubApplication
-import java.io.File
-import java.io.FileOutputStream
-import java.util.zip.ZipEntry
 import com.ridi.inyoung.epub.R
-import java.io.FileInputStream
-import java.util.zip.ZipInputStream
+import com.ridi.inyoung.epub.util.EpubParser
+import org.apache.commons.compress.archivers.zip.ZipFile
+import java.io.BufferedInputStream
+import java.io.File
+import java.io.InputStream
 
-
-class MainActivity : Activity() {
-
+class MainActivity: Activity() {
     companion object {
-        val TAG : String = "MainActivity"
+        val TAG = "MainActivity"
         val defaultBookFile = File(EPubApplication.instance.filesDir, "EPub")
     }
 
@@ -28,40 +25,54 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        unpack()
+        copyFile(resources.openRawResource(R.raw.book1))?.let {
+            unzip(it, defaultBookFile.absolutePath)
+        }
+
+        doParseContainer()
     }
 
-    private fun unpack() {
-        val zipStream = ZipInputStream(resources.openRawResource(R.raw.book1))
-        try {
-            defaultBookFile.mkdirs()
-        } catch (e: Exception) {
-            e.printStackTrace()
+    private fun doParseContainer() {
+        val context = EpubParser.Context(defaultBookFile)
+        EpubParser.parseContainer(context)
+        context.let {
+            Log.d(TAG, "path : " + it.opfPath)
         }
+    }
 
-        while (zipStream.available() == 1) {
-            val entry = zipStream.nextEntry as ZipEntry
-            Log.d(TAG, "entry: " + entry)
-            Log.d(TAG, "isdir: " + entry.isDirectory)
-
+    private fun unzip(zipFile: File, targetPath: String) {
+        val zip = ZipFile(zipFile, "euc-kr")
+        val entries = zip.entries
+        while (entries.hasMoreElements()) {
+            val entry = entries.nextElement()
+            val destFilePath = File(targetPath, entry.name)
+            destFilePath.parentFile.mkdirs()
             if (entry.isDirectory) {
-                val file = File(defaultBookFile, entry.name)
-                file.mkdirs()
-                Log.d(TAG, "Create dir " + entry.name)
-            } else {
-                val f = File(defaultBookFile, entry.name)
-                if (f.exists().not()) {
-                    f.createNewFile()
+                continue
+            }
+
+            val bufferedInputStream = BufferedInputStream(zip.getInputStream(entry))
+            bufferedInputStream.use {
+                destFilePath.outputStream().buffered(1024).use { out ->
+                    bufferedInputStream.copyTo(out)
                 }
-                val fis = FileInputStream(f)
-                fis.use {
-                    f.outputStream().buffered(1024).use { out ->
-                        fis.copyTo(out)
-                    }
-                }
-                Log.d(TAG, "file" + entry.getName())
             }
         }
-        Log.d(TAG, "done")
+        Log.d(TAG, "unzip done")
+    }
+
+    private fun copyFile(inputStream: InputStream): File? {
+        val file = File(EPubApplication.instance.filesDir, "book1.epub")
+        if (file.exists()) {
+            return null
+        }
+
+        inputStream.use {
+            file.outputStream().buffered(8192).use { out ->
+                inputStream.copyTo(out)
+            }
+        }
+        inputStream.close()
+        return file
     }
 }
