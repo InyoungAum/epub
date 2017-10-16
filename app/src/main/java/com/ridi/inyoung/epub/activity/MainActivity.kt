@@ -33,10 +33,11 @@ class MainActivity: Activity() {
     }
 
     private fun doParseContainer() {
-        val context = EpubParser.Context(defaultBookFile)
-        EpubParser.parseContainer(context)
-        context.let {
-            Log.d(TAG, "path : " + it.opfPath)
+
+        EpubParser.parseMetadata(defaultBookFile).let {
+            Log.d(TAG, "title : " + it.title)
+            Log.d(TAG, "cover : " + it.coverFile.path)
+            Log.d(TAG, "author : " + it.creator)
         }
     }
 
