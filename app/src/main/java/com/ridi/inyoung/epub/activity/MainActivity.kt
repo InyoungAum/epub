@@ -12,6 +12,7 @@ import org.apache.commons.compress.archivers.zip.ZipFile
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
+import java.util.*
 
 class MainActivity: Activity() {
     companion object {
@@ -33,11 +34,14 @@ class MainActivity: Activity() {
     }
 
     private fun doParseContainer() {
+        val context = EpubParser.parseSpine(defaultBookFile)
+        val curSpine = context.spines[10]
 
-        EpubParser.parseMetadata(defaultBookFile).let {
-            Log.d(TAG, "title : " + it.title)
-            Log.d(TAG, "cover : " + it.coverFile.path)
-            Log.d(TAG, "author : " + it.creator)
+        try {
+            val html = curSpine.getHtml()
+            webView.loadDataWithBaseURL(curSpine.baseUrl, html, "text/html", "UTF-8", null)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 

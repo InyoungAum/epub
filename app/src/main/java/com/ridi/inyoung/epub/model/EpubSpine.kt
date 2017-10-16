@@ -30,10 +30,14 @@ data class EpubSpine constructor(val id: String? = "" , val baseDir: String? = "
     private fun readFile(contentsFile: File): String {
         val lineSeparator = System.getProperty("line.separator")
         val sb = StringBuilder()
-        BufferedReader(FileReader(contentsFile)).use {
-            sb.append(it.readLine())
-            sb.append(lineSeparator)
+
+        BufferedReader(FileReader(contentsFile)).useLines { lines ->
+            lines.forEach {
+                sb.append(it)
+                sb.append(lineSeparator)
+            }
         }
+
         return sb.toString()
     }
 

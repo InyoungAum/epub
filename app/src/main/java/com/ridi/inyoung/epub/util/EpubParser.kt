@@ -91,7 +91,7 @@ object EpubParser {
 
 
     @Throws(SimpleXmlParser.Exception::class)
-    fun parseManifest(context: Context) {
+    private fun parseManifest(context: Context) {
         File(context.baseDir, context.opfPath).let {
             parseXml(it, ManifestHandler(context))
         }
@@ -191,13 +191,13 @@ object EpubParser {
             registerStartCallback("itemref", "pushSpineItem")
         }
 
-        internal fun pushTocPath(element: SimpleXmlParser.Element) {
+        fun pushTocPath(element: SimpleXmlParser.Element) {
             element.attr("toc").let {
                 context.ncxPath = context.manifest[it]
             }
         }
 
-        internal fun pushSpineItem(element: SimpleXmlParser.Element) {
+        fun pushSpineItem(element: SimpleXmlParser.Element) {
             val idref = element.attr("idref")
             var href: String? = context.manifest[idref]
             if (href != null) {
