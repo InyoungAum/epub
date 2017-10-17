@@ -1,29 +1,42 @@
 package com.ridi.inyoung.epub.activity
 
 import android.app.Activity
+import android.app.ProgressDialog
 import android.os.Build
 import android.os.Bundle
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.widget.ProgressBar
+import android.widget.RelativeLayout
+import android.widget.TextView
 import com.ridi.books.helper.Log
 import com.ridi.books.helper.view.findLazy
 import com.ridi.inyoung.epub.BuildConfig
 import com.ridi.inyoung.epub.EPubApplication
 import com.ridi.inyoung.epub.R
+import com.ridi.inyoung.epub.model.EpubSpine
 import com.ridi.inyoung.epub.util.EpubParser
+import com.ridi.inyoung.epub.view.EpubPager
 import com.ridi.inyoung.epub.view.EpubWebView
 import org.apache.commons.compress.archivers.zip.ZipFile
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 
-class MainActivity: Activity() {
+class MainActivity: Activity(), EpubPager.PagingListener {
     companion object {
         val TAG = "MainActivity"
         val defaultBookFile = File(EPubApplication.instance.filesDir, "EPub")
     }
 
-    val webView by findLazy<EpubWebView>(R.id.webView)
+    private val webView by findLazy<EpubWebView>(R.id.webView)
+    private val pagerWebView by findLazy<EpubWebView>(R.id.pagerWebView)
+    private val loadingLayout by findLazy<RelativeLayout>(R.id.loadingLayout)
+    private val loadingText by findLazy<TextView>(R.id.loadingText)
+
+    lateinit var context: EpubParser.Context
+    lateinit var epubPager: EpubPager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,11 +51,30 @@ class MainActivity: Activity() {
             unzip(it, defaultBookFile.absolutePath)
         }
 
-        doParseContainer()
+        generatePager()
     }
 
-    private fun doParseContainer() {
-        webView.context = EpubParser.parseSpine(defaultBookFile)
+    private fun generatePager() {
+        context = EpubParser.parseSpine(defaultBookFile)
+        pagerWebView.context = context
+        webView.context = context
+        EpubPager(this, pagerWebView).startPaging()
+        loadingLayout.visibility = VISIBLE
+    }
+
+    override fun onProgressPaging(spine: EpubSpine) {
+        runOnUiThread {
+            val progress = (spine.index + 1).times(100).div(context.spines.size )
+            loadingText.text = "로딩중입니다..$progress%"
+        }
+    }
+
+    override fun onCompletePaging() {
+        loadingLayout.visibility = GONE
+        loadBook()
+    }
+
+    private fun loadBook() {
         webView.loadSpine(1)
     }
 

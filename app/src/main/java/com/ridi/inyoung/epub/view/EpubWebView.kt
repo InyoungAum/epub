@@ -69,7 +69,7 @@ class EpubWebView : WebView {
     fun loadSpine(index: Int = 0) {
         currentSpineIndex = index
 
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
+        /*if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
             // - 젤리빈(4.1.x) 이하에서 '페이지 넘김 <-> 스크롤 보기' 전환 시 이전 페이지의 scroll을 가지고 있어 형광펜이 틀어지고 엉뚱한 페이지로 이동하는 문제가 있다
             //   (페이지 넘김 상태인데 pageOffset 크기의 y값이 있고 스크롤 보기인데 x값이 있음)
             scrollTo(0, 0)
@@ -78,19 +78,12 @@ class EpubWebView : WebView {
             //   (scrollTo로 호출해도 되긴 하는데 간헐적으로 window.pageOffset이 갱신되기 전에 loadData가 호출되어 원복되는 문제가 있어 injectJS로 이동시킨다
             //    그럼 젤리빈도 injectJS로 이동하면 되지 않나 싶지만 안 된다...)
             scrollToPageOffset(0)
-        }
+        }*/
 
         val curSpine = context.spines[index]
         try {
             val html = curSpine.getHtml()
             loadDataWithBaseURL(curSpine.baseUrl, html, "text/html", "UTF-8", null)
-            webViewClient = object: WebViewClient() {
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    super.onPageFinished(view, url)
-                    loadJsModule()
-                }
-            }
-
         } catch (e: Exception) {
             e.printStackTrace()
         }
