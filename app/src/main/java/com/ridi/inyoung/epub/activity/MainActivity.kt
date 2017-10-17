@@ -42,25 +42,8 @@ class MainActivity: Activity() {
     }
 
     private fun doParseContainer() {
-        val context = EpubParser.parseSpine(defaultBookFile)
-        val curSpine = context.spines[10]
-
-        try {
-            val html = curSpine.getHtml()
-            webView.loadDataWithBaseURL(curSpine.baseUrl, html, "text/html", "UTF-8", null)
-            webView.webViewClient = object: WebViewClient() {
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    super.onPageFinished(view, url)
-
-                    webView.loadJsModule()
-                    webView.injectJs("writeScrollHeight()")
-                }
-            }
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
+        webView.context = EpubParser.parseSpine(defaultBookFile)
+        webView.loadSpine(1)
     }
 
     private fun unzip(zipFile: File, targetPath: String) {

@@ -1,13 +1,14 @@
 package com.ridi.inyoung.epub
 
 import android.app.Application
+import com.ridi.books.helper.system.getSystemWebViewVersionCode
 import java.io.File
 
 /**
  * Created by inyoung on 2017. 10. 12..
  */
 
-class EPubApplication: Application() {
+open class EPubApplication: Application() {
     override fun onCreate() {
         super.onCreate()
 
@@ -21,5 +22,8 @@ class EPubApplication: Application() {
 
         @JvmStatic
         val internalStorageRoot: File by lazy { instance.filesDir }
+
+        @JvmStatic
+        val systemWebViewVersionCode by lazy { instance.getSystemWebViewVersionCode() }
     }
 }
