@@ -3,10 +3,13 @@ package com.ridi.inyoung.epub.activity
 import android.app.Activity
 import android.os.Build
 import android.os.Bundle
+import android.support.v4.widget.DrawerLayout
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.ArrayAdapter
+import android.widget.ListView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import com.ridi.books.helper.Log
@@ -14,10 +17,12 @@ import com.ridi.books.helper.view.findLazy
 import com.ridi.inyoung.epub.BuildConfig
 import com.ridi.inyoung.epub.EPubApplication
 import com.ridi.inyoung.epub.R
+import com.ridi.inyoung.epub.model.EpubNavPoint
 import com.ridi.inyoung.epub.model.EpubSpine
 import com.ridi.inyoung.epub.util.EpubParser
 import com.ridi.inyoung.epub.view.EpubPager
 import com.ridi.inyoung.epub.view.EpubWebView
+import com.ridi.inyoung.epub.view.NavPointAdapter
 import org.apache.commons.compress.archivers.zip.ZipFile
 import java.io.BufferedInputStream
 import java.io.File
@@ -31,6 +36,8 @@ class MainActivity: Activity(), EpubPager.PagingListener {
 
     private val webView by findLazy<EpubWebView>(R.id.webView)
     private val pagerWebView by findLazy<EpubWebView>(R.id.pagerWebView)
+    private val drawerLayout by findLazy<DrawerLayout>(R.id.drawerLayout)
+    private val leftDrawer by findLazy<ListView>(R.id.leftDrawer)
     private val loadingLayout by findLazy<RelativeLayout>(R.id.loadingLayout)
     private val loadingText by findLazy<TextView>(R.id.loadingText)
 
@@ -71,10 +78,17 @@ class MainActivity: Activity(), EpubPager.PagingListener {
     override fun onCompletePaging() {
         loadingLayout.visibility = GONE
         loadBook()
-        Log.d("navpoint", "${webView.context.navPoints.size}")
-        webView.context.navPoints.forEach { nav ->
-            Log.d("navpoint", "index : ${nav.index}  spineIndex : ${nav.spineIndex} label : ${nav.label}")
+        setLeftDrawer(webView.context.navPoints)
+    }
+
+    private fun setLeftDrawer(navpoints: MutableList<EpubNavPoint>) {
+        val navPointAdapter = NavPointAdapter(this, R.layout.navpoint_drawer_menu, navpoints)
+        leftDrawer.adapter = navPointAdapter
+        leftDrawer.setOnItemClickListener { _, _, position, _ ->
+            webView.loadSpine(navpoints[position].spineIndex)
+            drawerLayout.closeDrawers()
         }
+
     }
 
     private fun loadBook() {

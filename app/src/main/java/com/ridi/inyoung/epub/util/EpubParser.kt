@@ -239,7 +239,7 @@ object EpubParser {
         }
 
         fun pushNavPointIfNeededAndLevel(element: SimpleXmlParser.Element) {
-            pushNavPointIfNeeded()
+            pushNavPointIfNeeded(element)
             level = element.depth()
         }
 
@@ -251,7 +251,7 @@ object EpubParser {
             contentSrc = Uri.decode(element.attr("src"))
         }
 
-        fun pushNavPointIfNeeded() {
+        fun pushNavPointIfNeeded(element: SimpleXmlParser.Element) {
             if (hasNavPointToPush().not()) {
                 return
             }
