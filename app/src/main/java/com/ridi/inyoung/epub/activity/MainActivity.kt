@@ -1,13 +1,12 @@
 package com.ridi.inyoung.epub.activity
 
 import android.app.Activity
-import android.app.ProgressDialog
 import android.os.Build
 import android.os.Bundle
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.webkit.WebView
-import android.widget.ProgressBar
+import android.webkit.WebViewClient
 import android.widget.RelativeLayout
 import android.widget.TextView
 import com.ridi.books.helper.Log
@@ -55,7 +54,7 @@ class MainActivity: Activity(), EpubPager.PagingListener {
     }
 
     private fun generatePager() {
-        context = EpubParser.parseSpine(defaultBookFile)
+        context = EpubParser.parseReaderData(defaultBookFile)
         pagerWebView.context = context
         webView.context = context
         EpubPager(this, pagerWebView).startPaging()
@@ -72,10 +71,21 @@ class MainActivity: Activity(), EpubPager.PagingListener {
     override fun onCompletePaging() {
         loadingLayout.visibility = GONE
         loadBook()
+        Log.d("navpoint", "${webView.context.navPoints.size}")
+        webView.context.navPoints.forEach { nav ->
+            Log.d("navpoint", "index : ${nav.index}  spineIndex : ${nav.spineIndex} label : ${nav.label}")
+        }
     }
 
     private fun loadBook() {
         webView.loadSpine(1)
+        webView.webViewClient = object: WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                webView.loadJsModule()
+                webView.scrollToTop()
+            }
+        }
     }
 
     private fun unzip(zipFile: File, targetPath: String) {

@@ -16,5 +16,5 @@ function calcPageCount() {
 }
 
 function scrollAbsY(y) {
-    window.scrollBy(0, y)
+    window.scrollTo(0, y)
 }
