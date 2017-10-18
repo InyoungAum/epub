@@ -3,6 +3,7 @@ package com.ridi.inyoung.epub.view
 import android.content.Context
 import android.os.Build
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import android.webkit.*
 import com.ridi.books.helper.Log
@@ -17,6 +18,10 @@ import java.io.InputStreamReader
  */
 
 class EpubWebView : WebView {
+    interface PageChangeListener {
+        fun onPrevPage(spineIndex: Int)
+        fun onNextPage(spineIndex: Int)
+    }
     private val CHROME_51 = 270400000
 
     constructor(context: Context) : super(context)
@@ -26,6 +31,8 @@ class EpubWebView : WebView {
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
     lateinit var context: EpubParser.Context
+    lateinit var pageChangeListener: PageChangeListener
+    private var dragging = false
     private var currentSpineIndex = 0
 
     init {
@@ -83,17 +90,30 @@ class EpubWebView : WebView {
             if (currentSpineIndex > 0) {
                 currentSpineIndex --
             }
-            loadSpine(currentSpineIndex)
+            pageChangeListener.onPrevPage(currentSpineIndex)
         }
 
         if (scrollY + measuredHeight >= contentHeight * scale) {
             if (currentSpineIndex < context.spines.size - 1) {
                 currentSpineIndex++
             }
-            loadSpine(currentSpineIndex)
+            pageChangeListener.onNextPage(currentSpineIndex)
         }
 
         super.onScrollChanged(l, t, oldl, oldt)
+    }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        val action = event?.action
+        when (action) {
+            MotionEvent.ACTION_MOVE ->
+                if (dragging.not()) {
+                    dragging = true
+                }
+            MotionEvent.ACTION_UP ->
+                dragging = false
+        }
+        return super.onTouchEvent(event)
     }
 
     fun loadJsModule() {
@@ -121,17 +141,11 @@ class EpubWebView : WebView {
         }
     }
 
-    fun scrollToBtm() {
-        injectJs("getScrollHeight() - getScreenHeight()")
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
-            scrollTo(0, 1)
-        } else if (EPubApplication.systemWebViewVersionCode >= CHROME_51) {
-            //scrollToPageOffset()
-        }
-    }
-
-    private fun scrollToPageOffset(pageOffset: Int) {
-        injectJs("scrollAbsY($pageOffset)")
+    fun scrollToPageOffset(pageOffset: Int) {
+        val padding = 20f
+        val offset = Math.max(
+                ((pageOffset - 1) * (height / scale) ) - padding, padding)
+        injectJs("scrollAbsY($offset)")
     }
 
     private fun loadJavascriptModule(name: String) {

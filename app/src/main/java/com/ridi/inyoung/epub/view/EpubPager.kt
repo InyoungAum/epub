@@ -13,7 +13,7 @@ class EpubPager constructor(val pagingListener: PagingListener, val epubWebView:
         fun onCompletePaging()
     }
 
-    private val pageIndexes: MutableList<Int> = ArrayList()
+    val pageIndexes: MutableList<Int> = ArrayList()
     private val navPointIndexes: MutableList<Float> = ArrayList()
     private val jsInterface = DisposableJSInterface()
     private var spines: List<EpubSpine>
@@ -26,7 +26,9 @@ class EpubPager constructor(val pagingListener: PagingListener, val epubWebView:
                 super.onPageFinished(view, url)
 
                 epubWebView.loadJsModule()
-                epubWebView.injectJs("android.calcPageCount(calcPageCount())")
+                epubWebView.injectJs("setTimeout( function() {" +
+                        "android.calcPageCount(calcPageCount());" +
+                        "}, 50);")
             }
         }
     }
@@ -35,8 +37,8 @@ class EpubPager constructor(val pagingListener: PagingListener, val epubWebView:
         loadSpine()
     }
 
-    private fun loadSpine() {
-        epubWebView.loadSpine()
+    private fun loadSpine(index: Int = 0) {
+        epubWebView.loadSpine(index)
     }
 
     private fun pageCalculated(count: Int) {
@@ -51,7 +53,7 @@ class EpubPager constructor(val pagingListener: PagingListener, val epubWebView:
         pagingListener.onProgressPaging(spine)
 
         if (pageIndexes.size < spines.size) {
-            loadSpine()
+            loadSpine(pageIndexes.size)
         } else {
             jsInterface.dispose()
 

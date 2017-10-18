@@ -8,7 +8,6 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -28,7 +27,7 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 
-class MainActivity: Activity(), EpubPager.PagingListener {
+class MainActivity: Activity(), EpubPager.PagingListener , EpubWebView.PageChangeListener{
     companion object {
         val TAG = "MainActivity"
         val defaultBookFile = File(EPubApplication.instance.filesDir, "EPub")
@@ -43,6 +42,7 @@ class MainActivity: Activity(), EpubPager.PagingListener {
 
     lateinit var context: EpubParser.Context
     lateinit var epubPager: EpubPager
+    var currentOffset = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,29 +56,40 @@ class MainActivity: Activity(), EpubPager.PagingListener {
         copyFile(resources.openRawResource(R.raw.book1))?.let {
             unzip(it, defaultBookFile.absolutePath)
         }
+        parseEpub()
+        generatePager(context)
 
-        generatePager()
     }
 
-    private fun generatePager() {
+    private fun parseEpub() {
         context = EpubParser.parseReaderData(defaultBookFile)
-        pagerWebView.context = context
+    }
+
+    private fun setEpubWebView(context: EpubParser.Context) {
         webView.context = context
-        EpubPager(this, pagerWebView).startPaging()
+        webView.pageChangeListener = this
+    }
+
+    private fun generatePager(context: EpubParser.Context) {
+        pagerWebView.context = context
+        epubPager = EpubPager(this, pagerWebView)
+        epubPager.startPaging()
         loadingLayout.visibility = VISIBLE
     }
 
     override fun onProgressPaging(spine: EpubSpine) {
         runOnUiThread {
-            val progress = (spine.index + 1).times(100).div(context.spines.size )
+            val progress = (spine.index + 1).times(100).div(context.spines.size)
             loadingText.text = "로딩중입니다..$progress%"
         }
     }
 
     override fun onCompletePaging() {
         loadingLayout.visibility = GONE
+        epubPager.epubWebView.visibility = GONE
+        setEpubWebView(context)
+        setLeftDrawer(context.navPoints)
         loadBook()
-        setLeftDrawer(webView.context.navPoints)
     }
 
     private fun setLeftDrawer(navpoints: MutableList<EpubNavPoint>) {
@@ -88,7 +99,6 @@ class MainActivity: Activity(), EpubPager.PagingListener {
             webView.loadSpine(navpoints[position].spineIndex)
             drawerLayout.closeDrawers()
         }
-
     }
 
     private fun loadBook() {
@@ -97,9 +107,20 @@ class MainActivity: Activity(), EpubPager.PagingListener {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 webView.loadJsModule()
-                webView.scrollToTop()
+                webView.scrollToPageOffset(currentOffset)
             }
         }
+    }
+
+    override fun onPrevPage(spineIndex: Int) {
+        Log.d("index", "${epubPager.pageIndexes[spineIndex]}  ${epubPager.pageIndexes[spineIndex - 1]}")
+        currentOffset = epubPager.pageIndexes[spineIndex] - epubPager.pageIndexes[spineIndex - 1]
+        webView.loadSpine(spineIndex)
+    }
+
+    override fun onNextPage(spineIndex: Int) {
+        currentOffset = 0
+        webView.loadSpine(spineIndex)
     }
 
     private fun unzip(zipFile: File, targetPath: String) {

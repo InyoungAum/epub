@@ -1,6 +1,6 @@
 "use strict";
 function getScrollHeight() {
-    return document.scrollingElement.scrollHeight;
+    return document.documentElement.scrollHeight;
 }
 
 function getScreenHeight() {
@@ -12,9 +12,9 @@ function getCurrentScrollHeight() {
 }
 
 function calcPageCount() {
-    return Math.round(getScrollHeight() / getScreenHeight())
+    return Math.round(getScrollHeight() / getScreenHeight() - 0.5);
 }
 
 function scrollAbsY(y) {
-    window.scrollTo(0, y)
+    window.scrollTo(0, y);
 }
