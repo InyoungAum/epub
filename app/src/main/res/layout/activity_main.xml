@@ -14,30 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <RelativeLayout
-        android:id="@+id/loadingLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#af000000"
-        android:visibility="gone">
-
-        <android.support.v4.widget.ContentLoadingProgressBar
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            style="@style/Base.Widget.AppCompat.ProgressBar"
-            android:id="@+id/contentLoadingProgressBar" />
-
-        <TextView
-            android:id="@+id/loadingText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="로딩중입니다.."
-            android:layout_below="@+id/contentLoadingProgressBar"
-            android:layout_marginTop="8dp"
-            android:textColor="#e6e6e6"
-            android:layout_centerHorizontal="true" />
-
-    </RelativeLayout>
+    <include
+        layout="@layout/loading_view" />
 
 </RelativeLayout>
