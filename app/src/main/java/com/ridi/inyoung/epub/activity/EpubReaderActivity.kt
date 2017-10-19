@@ -9,13 +9,12 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.RelativeLayout
 import android.widget.TextView
-import com.ridi.books.helper.Log
 import com.ridi.books.helper.view.findLazy
 import com.ridi.inyoung.epub.BuildConfig
-import com.ridi.inyoung.epub.EPubApplication
 import com.ridi.inyoung.epub.R
 import com.ridi.inyoung.epub.model.EpubNavPoint
 import com.ridi.inyoung.epub.model.EpubSpine
@@ -24,19 +23,18 @@ import com.ridi.inyoung.epub.util.PageUtil
 import com.ridi.inyoung.epub.view.EpubPager
 import com.ridi.inyoung.epub.view.EpubWebView
 import com.ridi.inyoung.epub.view.NavPointAdapter
-import org.apache.commons.compress.archivers.zip.ZipFile
-import java.io.BufferedInputStream
 import java.io.File
-import java.io.InputStream
 
 class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.PageChangeListener{
 
     private val webView by findLazy<EpubWebView>(R.id.webView)
     private val pagerWebView by findLazy<EpubWebView>(R.id.pagerWebView)
     private val drawerLayout by findLazy<DrawerLayout>(R.id.drawerLayout)
-    private val leftDrawer by findLazy<ListView>(R.id.leftDrawer)
+    private val menuList by findLazy<ListView>(R.id.menuList)
     private val loadingLayout by findLazy<RelativeLayout>(R.id.loadingLayout)
     private val loadingText by findLazy<TextView>(R.id.loadingText)
+    private val titleText by findLazy<TextView>(R.id.titleText)
+    private val authorText by findLazy<TextView>(R.id.authorText)
 
     lateinit var context: EpubParser.Context
     lateinit var epubPager: EpubPager
@@ -55,9 +53,13 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
             WebView.setWebContentsDebuggingEnabled(true)
         }
 
-        parseEpub()
-        generatePager(context)
+        findViewById<ImageButton>(R.id.closeButton).setOnClickListener({
+            finish()
+        })
 
+        parseEpub()
+        getMetadata()
+        generatePager(context)
     }
 
     private fun parseEpub() {
@@ -78,6 +80,15 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
         loadingLayout.visibility = VISIBLE
     }
 
+    private fun getMetadata() {
+        File(MainActivity.defaultBookFile, bookName).let { file ->
+            EpubParser.parseMetadata(file).let {
+                titleText.text = it.title ?: "title"
+                authorText.text = it.creator ?: "author"
+            }
+        }
+    }
+
     override fun onProgressPaging(spine: EpubSpine) {
         runOnUiThread {
             val progress = (spine.index + 1).times(100).div(context.spines.size)
@@ -88,14 +99,14 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
     override fun onCompletePaging() {
         loadingLayout.visibility = GONE
         setEpubWebView(context)
-        setLeftDrawer(context.navPoints)
+        setDrawerMenu(context.navPoints)
         loadBook()
     }
 
-    private fun setLeftDrawer(navpoints: MutableList<EpubNavPoint>) {
+    private fun setDrawerMenu(navpoints: MutableList<EpubNavPoint>) {
         val navPointAdapter = NavPointAdapter(this, R.layout.navpoint_drawer_menu, navpoints)
-        leftDrawer.adapter = navPointAdapter
-        leftDrawer.setOnItemClickListener { _, _, position, _ ->
+        menuList.adapter = navPointAdapter
+        menuList.setOnItemClickListener { _, _, position, _ ->
             webView.loadSpine(navpoints[position].spineIndex)
             drawerLayout.closeDrawers()
         }

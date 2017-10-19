@@ -316,8 +316,8 @@ object EpubParser {
     }
 
     class Metadata {
-        lateinit var title: String
-        lateinit var creator: String
-        lateinit var coverFile: File
+        var title: String? = null
+        var creator: String? = null
+        var coverFile: File? = null
     }
 }
