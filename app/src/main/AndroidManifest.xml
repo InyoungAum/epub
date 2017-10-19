@@ -22,7 +22,8 @@
             </intent-filter>
 
         </activity>
-
+        
+        <activity android:name=".activity.EpubReaderActivity"/>
 
         <provider
             android:name="android.support.v4.content.FileProvider"

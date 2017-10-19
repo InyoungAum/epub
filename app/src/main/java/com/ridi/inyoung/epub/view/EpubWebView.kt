@@ -185,6 +185,14 @@ class EpubWebView : WebView {
         injectJs("scrollAbsY($offset)")
     }
 
+    fun scrollYPosition(y: Int) {
+        val padding = 20f
+        val positionY = Math.max(y - padding, padding).toInt()
+        injectJs("scrollAbsY($positionY)")
+    }
+
+    fun computeVerticalScrollHeight(): Int = super.computeVerticalScrollRange()
+
     private fun loadJavascriptModule(name: String) {
         val script = StringBuilder()
         try {

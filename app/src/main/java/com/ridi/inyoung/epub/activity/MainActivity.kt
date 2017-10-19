@@ -1,138 +1,56 @@
 package com.ridi.inyoung.epub.activity
 
 import android.app.Activity
-import android.os.Build
+import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.support.v4.widget.DrawerLayout
-import android.view.View.GONE
-import android.view.View.VISIBLE
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.widget.ListView
-import android.widget.RelativeLayout
-import android.widget.TextView
+import android.widget.Button
 import com.ridi.books.helper.Log
 import com.ridi.books.helper.view.findLazy
-import com.ridi.inyoung.epub.BuildConfig
 import com.ridi.inyoung.epub.EPubApplication
 import com.ridi.inyoung.epub.R
-import com.ridi.inyoung.epub.model.EpubNavPoint
-import com.ridi.inyoung.epub.model.EpubSpine
-import com.ridi.inyoung.epub.util.EpubParser
-import com.ridi.inyoung.epub.util.PageUtil
-import com.ridi.inyoung.epub.view.EpubPager
-import com.ridi.inyoung.epub.view.EpubWebView
-import com.ridi.inyoung.epub.view.NavPointAdapter
 import org.apache.commons.compress.archivers.zip.ZipFile
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 
-class MainActivity: Activity(), EpubPager.PagingListener , EpubWebView.PageChangeListener{
+class MainActivity: Activity() {
     companion object {
-        val TAG = "MainActivity"
+        val TAG = "EpubReaderActivity"
         val defaultBookFile = File(EPubApplication.instance.filesDir, "EPub")
     }
 
-    private val webView by findLazy<EpubWebView>(R.id.webView)
-    private val pagerWebView by findLazy<EpubWebView>(R.id.pagerWebView)
-    private val drawerLayout by findLazy<DrawerLayout>(R.id.drawerLayout)
-    private val leftDrawer by findLazy<ListView>(R.id.leftDrawer)
-    private val loadingLayout by findLazy<RelativeLayout>(R.id.loadingLayout)
-    private val loadingText by findLazy<TextView>(R.id.loadingText)
+    private val book1 by findLazy<Button>(R.id.book1)
+    private val book2 by findLazy<Button>(R.id.book2)
 
-    lateinit var context: EpubParser.Context
-    lateinit var epubPager: EpubPager
-    var currentOffset = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        findRawList()
 
-        if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            // 디버그 모드에 한해서 디바이스에도 웹 디버거를 연결할 수 있도록(Android 4.4 이상).
-            WebView.setWebContentsDebuggingEnabled(true)
-        }
+        book1.setOnClickListener({
+            val intent = Intent(this, EpubReaderActivity::class.java)
+            intent.putExtra("book_name", "book1")
+            startActivity(intent)
+        })
 
-        copyFile(resources.openRawResource(R.raw.book1))?.let {
-            unzip(it, defaultBookFile.absolutePath)
-        }
-        parseEpub()
-        generatePager(context)
-
+        book2.setOnClickListener({
+            val intent = Intent(this, EpubReaderActivity::class.java)
+            intent.putExtra("book_name", "pr")
+            startActivity(intent)
+        })
     }
 
-    private fun parseEpub() {
-        context = EpubParser.parseReaderData(defaultBookFile)
-    }
+    private fun findRawList() {
+        val fields = R.raw::class.java.fields
 
-    private fun setEpubWebView(context: EpubParser.Context) {
-        webView.context = context
-        webView.pageChangeListener = this
-    }
-
-    private fun generatePager(context: EpubParser.Context) {
-        pagerWebView.context = context
-        epubPager = EpubPager(this, pagerWebView)
-        epubPager.startPaging()
-        loadingLayout.visibility = VISIBLE
-    }
-
-    override fun onProgressPaging(spine: EpubSpine) {
-        runOnUiThread {
-            val progress = (spine.index + 1).times(100).div(context.spines.size)
-            loadingText.text = "로딩중입니다..$progress%"
-        }
-    }
-
-    override fun onCompletePaging() {
-        loadingLayout.visibility = GONE
-        setEpubWebView(context)
-        setLeftDrawer(context.navPoints)
-        loadBook()
-    }
-
-    private fun setLeftDrawer(navpoints: MutableList<EpubNavPoint>) {
-        val navPointAdapter = NavPointAdapter(this, R.layout.navpoint_drawer_menu, navpoints)
-        leftDrawer.adapter = navPointAdapter
-        leftDrawer.setOnItemClickListener { _, _, position, _ ->
-            webView.loadSpine(navpoints[position].spineIndex)
-            drawerLayout.closeDrawers()
-        }
-    }
-
-    private fun loadBook() {
-        webView.loadSpine(1)
-        webView.webViewClient = object: WebViewClient() {
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                spineLoaded(currentOffset)
+        fields.filter { it.type.name.equals("int") }.forEach { field ->
+            copyFile(resources.openRawResource(
+                    resources.getIdentifier(field.name, "raw", packageName)),
+                    field.name)?.let {
+                unzip(it, defaultBookFile.absolutePath + "/${field.name}")
             }
         }
-    }
-
-    override fun onPrevSpine(spineIndex: Int) {
-        currentOffset = PageUtil.currentPageCount(epubPager.pageIndexes, spineIndex)
-        loadSpine(spineIndex)
-    }
-
-    override fun onNextSpine(spineIndex: Int) {
-        currentOffset = 0
-        loadSpine(spineIndex)
-    }
-
-    private fun loadSpine(index: Int) {
-        loadingLayout.visibility = VISIBLE
-        Handler().postDelayed({
-            webView.loadSpine(index)
-            loadingLayout.visibility = GONE
-        }, 300)
-    }
-
-    private fun spineLoaded(offset: Int) {
-        webView.loadJsModule()
-        webView.scrollToPageOffset(offset)
     }
 
     private fun unzip(zipFile: File, targetPath: String) {
@@ -156,8 +74,8 @@ class MainActivity: Activity(), EpubPager.PagingListener , EpubWebView.PageChang
         Log.d(TAG, "unzip done")
     }
 
-    private fun copyFile(inputStream: InputStream): File? {
-        val file = File(EPubApplication.instance.filesDir, "book1.epub")
+    private fun copyFile(inputStream: InputStream, name: String): File? {
+        val file = File(EPubApplication.instance.filesDir, "$name.epub")
         if (file.exists()) {
             return null
         }

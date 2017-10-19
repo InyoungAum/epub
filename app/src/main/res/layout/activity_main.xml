@@ -1,39 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.DrawerLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/drawerLayout"
+    android:id="@+id/contentLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <RelativeLayout
-        android:id="@+id/contentLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <Button
+        android:id="@+id/book1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="book1"/>
 
-        <com.ridi.inyoung.epub.view.EpubWebView
-            android:id="@+id/pagerWebView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="invisible"/>
+    <Button
+        android:id="@+id/book2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="book12"
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/book1" />
 
-        <com.ridi.inyoung.epub.view.EpubWebView
-            android:id="@+id/webView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
-        <include
-            layout="@layout/loading_view" />
-
-    </RelativeLayout>
-
-    <ListView
-        android:id="@+id/leftDrawer"
-        android:layout_width="240dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:choiceMode="singleChoice"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="0dp"
-        android:background="#111"/>
-
-</android.support.v4.widget.DrawerLayout>
+</RelativeLayout>
