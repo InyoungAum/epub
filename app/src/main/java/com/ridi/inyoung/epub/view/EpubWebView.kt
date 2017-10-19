@@ -2,16 +2,17 @@ package com.ridi.inyoung.epub.view
 
 import android.content.Context
 import android.os.Build
+import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.*
 import com.ridi.books.helper.Log
-import com.ridi.inyoung.epub.EPubApplication
 import com.ridi.inyoung.epub.util.EpubParser
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
+import kotlin.properties.Delegates
 
 /**
  * Created by inyoung on 2017. 10. 16..
@@ -19,8 +20,8 @@ import java.io.InputStreamReader
 
 class EpubWebView : WebView {
     interface PageChangeListener {
-        fun onPrevPage(spineIndex: Int)
-        fun onNextPage(spineIndex: Int)
+        fun onPrevSpine(spineIndex: Int)
+        fun onNextSpine(spineIndex: Int)
     }
     private val CHROME_51 = 270400000
 
@@ -32,8 +33,13 @@ class EpubWebView : WebView {
 
     lateinit var context: EpubParser.Context
     lateinit var pageChangeListener: PageChangeListener
+
     private var dragging = false
+    private var scrolling = false
     private var currentSpineIndex = 0
+    private var preScrollPosY = 0
+    private var spineLoaded = true
+    private var scrollTask: Runnable by Delegates.notNull()
 
     init {
         setHorizontalScrollBarEnabled(false)
@@ -41,17 +47,19 @@ class EpubWebView : WebView {
         setVerticalScrollbarOverlay(true)
         overScrollMode = View.OVER_SCROLL_NEVER
 
-        val settings = settings
-        settings.javaScriptEnabled = true
-        settings.pluginState = WebSettings.PluginState.ON
-        settings.setSupportZoom(false)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            settings.allowFileAccessFromFileURLs = true
-        }
-        settings.setNeedInitialFocus(false)
 
-        // KITKAT 이상에서 접근성->큰 텍스트 선택 시 이 값이 조정되어 크기가 커지는데 pagination 요소에 포함되어 있지 않아 강제한다
-        settings.textZoom = 100
+        settings.run {
+            javaScriptEnabled = true
+            pluginState = WebSettings.PluginState.ON
+            setSupportZoom(false)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                allowFileAccessFromFileURLs = true
+            }
+            setNeedInitialFocus(false)
+
+            // KITKAT 이상에서 접근성->큰 텍스트 선택 시 이 값이 조정되어 크기가 커지는데 pagination 요소에 포함되어 있지 않아 강제한다
+            textZoom = 100
+        }
 
         webChromeClient = object : WebChromeClient() {
             override fun onJsAlert(view: WebView, url: String, message: String,
@@ -71,10 +79,34 @@ class EpubWebView : WebView {
                 return true
             }
         }
+
+        scrollTask = Runnable {
+            if (scrolling) {
+                if (scrollY == preScrollPosY) {
+                    if (dragging.not()) {
+                        scrolling = false
+                    } else {
+                        postDelayed(scrollTask, 100)
+                    }
+                } else {
+                    preScrollPosY = scrollY
+                    postDelayed(scrollTask, 100)
+                }
+            }
+        }
     }
 
     fun loadSpine(index: Int = 0) {
+        preScrollPosY = 0
         currentSpineIndex = index
+        scrolling = false
+        dragging = false
+        spineLoaded = true
+
+        alpha = 0f
+        ViewCompat.animate(this)
+                .setDuration(500 * 2)
+                .alpha(1f)
 
         val curSpine = context.spines[index]
         try {
@@ -86,21 +118,34 @@ class EpubWebView : WebView {
     }
 
     override fun onScrollChanged(l: Int, t: Int, oldl: Int, oldt: Int) {
+        super.onScrollChanged(l, t, oldl, oldt)
+        if (spineLoaded) {
+            spineLoaded = false
+            return
+        }
+
+        if (t == 0 && oldt == 0) {
+            return
+        }
+        if (!scrolling) {
+            scrolling = true
+            preScrollPosY = oldt
+            postDelayed(scrollTask, 100)
+        }
+
         if (scrollY <= 0) {
             if (currentSpineIndex > 0) {
-                currentSpineIndex --
+                currentSpineIndex--
             }
-            pageChangeListener.onPrevPage(currentSpineIndex)
+            pageChangeListener.onPrevSpine(currentSpineIndex)
         }
 
         if (scrollY + measuredHeight >= contentHeight * scale) {
             if (currentSpineIndex < context.spines.size - 1) {
                 currentSpineIndex++
             }
-            pageChangeListener.onNextPage(currentSpineIndex)
+            pageChangeListener.onNextSpine(currentSpineIndex)
         }
-
-        super.onScrollChanged(l, t, oldl, oldt)
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -133,16 +178,8 @@ class EpubWebView : WebView {
         }
     }
 
-    fun scrollToTop() {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
-            scrollTo(0, 1)
-        } else if (EPubApplication.systemWebViewVersionCode >= CHROME_51) {
-            scrollToPageOffset(1)
-        }
-    }
-
     fun scrollToPageOffset(pageOffset: Int) {
-        val padding = 20f
+        val padding = 20f / scale
         val offset = Math.max(
                 ((pageOffset - 1) * (height / scale) ) - padding, padding)
         injectJs("scrollAbsY($offset)")

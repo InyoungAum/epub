@@ -3,6 +3,7 @@ package com.ridi.inyoung.epub.activity
 import android.app.Activity
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.support.v4.widget.DrawerLayout
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -19,6 +20,7 @@ import com.ridi.inyoung.epub.R
 import com.ridi.inyoung.epub.model.EpubNavPoint
 import com.ridi.inyoung.epub.model.EpubSpine
 import com.ridi.inyoung.epub.util.EpubParser
+import com.ridi.inyoung.epub.util.PageUtil
 import com.ridi.inyoung.epub.view.EpubPager
 import com.ridi.inyoung.epub.view.EpubWebView
 import com.ridi.inyoung.epub.view.NavPointAdapter
@@ -86,7 +88,6 @@ class MainActivity: Activity(), EpubPager.PagingListener , EpubWebView.PageChang
 
     override fun onCompletePaging() {
         loadingLayout.visibility = GONE
-        epubPager.epubWebView.visibility = GONE
         setEpubWebView(context)
         setLeftDrawer(context.navPoints)
         loadBook()
@@ -106,21 +107,32 @@ class MainActivity: Activity(), EpubPager.PagingListener , EpubWebView.PageChang
         webView.webViewClient = object: WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
-                webView.loadJsModule()
-                webView.scrollToPageOffset(currentOffset)
+                spineLoaded(currentOffset)
             }
         }
     }
 
-    override fun onPrevPage(spineIndex: Int) {
-        Log.d("index", "${epubPager.pageIndexes[spineIndex]}  ${epubPager.pageIndexes[spineIndex - 1]}")
-        currentOffset = epubPager.pageIndexes[spineIndex] - epubPager.pageIndexes[spineIndex - 1]
-        webView.loadSpine(spineIndex)
+    override fun onPrevSpine(spineIndex: Int) {
+        currentOffset = PageUtil.currentPageCount(epubPager.pageIndexes, spineIndex)
+        loadSpine(spineIndex)
     }
 
-    override fun onNextPage(spineIndex: Int) {
+    override fun onNextSpine(spineIndex: Int) {
         currentOffset = 0
-        webView.loadSpine(spineIndex)
+        loadSpine(spineIndex)
+    }
+
+    private fun loadSpine(index: Int) {
+        loadingLayout.visibility = VISIBLE
+        Handler().postDelayed({
+            webView.loadSpine(index)
+            loadingLayout.visibility = GONE
+        }, 300)
+    }
+
+    private fun spineLoaded(offset: Int) {
+        webView.loadJsModule()
+        webView.scrollToPageOffset(offset)
     }
 
     private fun unzip(zipFile: File, targetPath: String) {

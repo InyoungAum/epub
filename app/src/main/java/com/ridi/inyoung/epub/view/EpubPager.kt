@@ -26,9 +26,7 @@ class EpubPager constructor(val pagingListener: PagingListener, val epubWebView:
                 super.onPageFinished(view, url)
 
                 epubWebView.loadJsModule()
-                epubWebView.injectJs("setTimeout( function() {" +
-                        "android.calcPageCount(calcPageCount());" +
-                        "}, 50);")
+                epubWebView.injectJs("android.calcPageCount(calcPageCount());")
             }
         }
     }
