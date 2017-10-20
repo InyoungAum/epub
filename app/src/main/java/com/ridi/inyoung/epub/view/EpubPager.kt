@@ -19,6 +19,7 @@ class EpubPager constructor(val pagingListener: PagingListener, val epubWebView:
 
     init {
         epubWebView.addJavascriptInterface(jsInterface, "android")
+        epubWebView.forPagination = true
         spines = epubWebView.context.spines
         epubWebView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {

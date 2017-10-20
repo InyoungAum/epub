@@ -2,16 +2,19 @@ package com.ridi.inyoung.epub.view
 
 import android.content.Context
 import android.os.Build
+import android.support.annotation.Dimension
 import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.*
 import com.ridi.books.helper.Log
+import com.ridi.books.helper.annotation.Dp
 import com.ridi.inyoung.epub.util.EpubParser
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
+import java.util.*
 import kotlin.properties.Delegates
 
 /**
@@ -33,6 +36,9 @@ class EpubWebView : WebView {
 
     lateinit var context: EpubParser.Context
     lateinit var pageChangeListener: PageChangeListener
+    lateinit var renderingContext: RenderingContext
+
+    var forPagination = false
 
     private var dragging = false
     private var scrolling = false
@@ -96,6 +102,12 @@ class EpubWebView : WebView {
         }
     }
 
+    override fun onSizeChanged(w: Int, h: Int, ow: Int, oh: Int) {
+        super.onSizeChanged(w, h, ow, oh)
+        renderingContext = RenderingContext(getContext(), w, h, forPagination)
+
+    }
+
     fun loadSpine(index: Int = 0) {
         preScrollPosY = 0
         currentSpineIndex = index
@@ -110,7 +122,7 @@ class EpubWebView : WebView {
 
         val curSpine = context.spines[index]
         try {
-            val html = curSpine.getHtml()
+            val html = normalizeHtml(curSpine.getHtml()!!)
             loadDataWithBaseURL(curSpine.baseUrl, html, "text/html", "UTF-8", null)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -179,15 +191,15 @@ class EpubWebView : WebView {
     }
 
     fun scrollToPageOffset(pageOffset: Int) {
-        val padding = 20f / scale
+/*        val padding = getBodyPaddingTop(renderingContext)
         val offset = Math.max(
-                ((pageOffset - 1) * (height / scale) ) - padding, padding)
-        injectJs("scrollAbsY($offset)")
+                ((pageOffset - 1) * renderingContext.height) - padding, padding)*/
+        injectJs("scrollByOffset($pageOffset)")
     }
 
     fun scrollYPosition(y: Int) {
-        val padding = 20f
-        val positionY = Math.max(y - padding, padding).toInt()
+        val padding = getBodyPaddingTop(renderingContext)
+        val positionY = Math.max(y - padding, padding)
         injectJs("scrollAbsY($positionY)")
     }
 
@@ -208,5 +220,89 @@ class EpubWebView : WebView {
         }
 
         injectJs(script.toString())
+    }
+
+    private fun getNormalizedStyle(): String {
+        val context = RenderingContext(getContext(), width, height, forPagination)
+
+        // html style
+        val htmlStyle = String.format(Locale.US,
+                "padding: 0 !important; margin: 0 !important;" + " width: %dpx !important;",
+                context.columnWidth)
+
+        // body style
+        var bodyStyle = String.format(Locale.US,
+                "height: auto !important; padding: %dpx 0 %dpx 0 !important;" + " margin: 0 0 %dpx 0 !important; background-color: %s; color: %s;",
+                getBodyPaddingTop(context), context.bodyPaddingBottom,
+                context.bodyMarginBottom, context.bgColor, context.fgColor)
+        val minHeight = getBodyPaddingTop(context) + context.height + context.bodyPaddingBottom
+        bodyStyle += String.format(Locale.US, " min-height: %dpx !important;", minHeight)
+
+
+        val globalStyle = StringBuilder()
+        globalStyle.append(" word-break: break-word; -webkit-tap-highlight-color: transparent;")
+
+        // android only
+        val replacement = StringBuilder()
+        replacement
+                .append(" * { ").append(globalStyle).append(" }")
+                .append(" html { ").append(htmlStyle).append(" }")
+                .append(" body { ").append(bodyStyle).append(" }")
+                .append(" p { font-size: 1em; text-align: justify; }")
+                .append(" img, video, svg { max-width: 100%; max-height: 95%; margin: 0 auto; padding: 0; }")
+                .append(" pre { white-space: pre-wrap; }")
+                .append(" a:-webkit-any-link { text-decoration: none; }")
+                .append(" { line-height: initial !important; }")
+                .append(" aside { display: none; }")
+
+        return replacement.toString()
+    }
+
+    private fun normalizeHtml(html: String): String {
+        var html = html
+        val replacement = "<meta name='format-detection' content='telephone=no' />" +
+                "<meta name='format-detection' content='address=no' />" +
+                "<style>" +
+                getNormalizedStyle() +
+                "</style></head>"
+        html = html.replace("(?i)</head>".toRegex(), replacement)
+
+        // video 태그 일단 미지원
+        html = html.replace("(?i)<video".toRegex(), "<video-not-supported")
+
+        return html
+    }
+
+    private fun getBodyPaddingTop(context : RenderingContext): Int
+            = if (currentSpineIndex == 0) context.bodyPaddingTopWhenFirstSpine else context.bodyPaddingTop
+
+
+    class RenderingContext constructor(context: Context, canvasWidth: Int, canvasHeight: Int, forPagination: Boolean){
+        val columnWidth: Int
+        val height: Int
+        val columnGap: Int
+        val bodyMarginBottom: Int
+
+        val bodyPaddingTop: Int
+        val bodyPaddingTopWhenFirstSpine: Int
+        val bodyPaddingBottom: Int
+
+        val bgColor: String
+        val fgColor: String
+        init {
+            columnWidth= Math.round(pixelToDip(context, canvasWidth.toFloat()))
+            height = Math.round(pixelToDip(context, canvasHeight.toFloat()))
+            columnGap = if (forPagination) 0 else 10
+            bodyMarginBottom = 0
+            bodyPaddingTop = if (forPagination) 0 else (height * (0.5f / 2)).toInt()
+            bodyPaddingTopWhenFirstSpine = if (forPagination) 0 else 30
+            bodyPaddingBottom = if (forPagination) 0 else (height * 0.5f).toInt()
+            bgColor = "white"
+            fgColor = "black"
+        }
+        @Dp
+        private fun pixelToDip(context: Context, @Dimension pixel: Float): Float =
+                pixel / context.resources.displayMetrics.density
+
     }
 }
