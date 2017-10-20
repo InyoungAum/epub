@@ -30,13 +30,13 @@ class MainActivity: Activity() {
 
         book1.setOnClickListener({
             val intent = Intent(this, EpubReaderActivity::class.java)
-            intent.putExtra("book_name", "book1")
+            intent.putExtra(EpubReaderActivity.KEY_BOOK_NAME, "book1")
             startActivity(intent)
         })
 
         book2.setOnClickListener({
             val intent = Intent(this, EpubReaderActivity::class.java)
-            intent.putExtra("book_name", "pr")
+            intent.putExtra(EpubReaderActivity.KEY_BOOK_NAME, "pr")
             startActivity(intent)
         })
     }

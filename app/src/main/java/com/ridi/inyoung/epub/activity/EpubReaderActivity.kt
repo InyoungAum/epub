@@ -16,6 +16,7 @@ import android.widget.TextView
 import com.ridi.books.helper.view.findLazy
 import com.ridi.inyoung.epub.BuildConfig
 import com.ridi.inyoung.epub.R
+import com.ridi.inyoung.epub.model.EpubDataSource
 import com.ridi.inyoung.epub.model.EpubNavPoint
 import com.ridi.inyoung.epub.model.EpubSpine
 import com.ridi.inyoung.epub.util.EpubParser
@@ -23,9 +24,11 @@ import com.ridi.inyoung.epub.util.PageUtil
 import com.ridi.inyoung.epub.view.EpubPager
 import com.ridi.inyoung.epub.view.EpubWebView
 import com.ridi.inyoung.epub.view.NavPointAdapter
-import java.io.File
 
 class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.PageChangeListener{
+    companion object {
+        val KEY_BOOK_NAME = "book_name"
+    }
 
     private val webView by findLazy<EpubWebView>(R.id.webView)
     private val pagerWebView by findLazy<EpubWebView>(R.id.pagerWebView)
@@ -38,7 +41,7 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
 
     lateinit var context: EpubParser.Context
     lateinit var epubPager: EpubPager
-    lateinit var bookName: String
+    lateinit var epubDataSource: EpubDataSource
     var currentOffset = 0
 
 
@@ -46,7 +49,7 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_epub_reader)
 
-        bookName = intent.getStringExtra("book_name")
+        val bookName = intent.getStringExtra(KEY_BOOK_NAME)
 
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             // 디버그 모드에 한해서 디바이스에도 웹 디버거를 연결할 수 있도록(Android 4.4 이상).
@@ -57,15 +60,14 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
             finish()
         })
 
-        parseEpub()
-        getMetadata()
+        epubDataSource = EpubDataSource(bookName)
+        setContext()
+        setMetaData()
         generatePager(context)
     }
 
-    private fun parseEpub() {
-        File(MainActivity.defaultBookFile, bookName).let {
-            context = EpubParser.parseReaderData(it)
-        }
+    private fun setContext() {
+        context = epubDataSource.parseEpub()
     }
 
     private fun setEpubWebView(context: EpubParser.Context) {
@@ -80,12 +82,10 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
         loadingLayout.visibility = VISIBLE
     }
 
-    private fun getMetadata() {
-        File(MainActivity.defaultBookFile, bookName).let { file ->
-            EpubParser.parseMetadata(file).let {
-                titleText.text = it.title ?: "title"
-                authorText.text = it.creator ?: "author"
-            }
+    private fun setMetaData() {
+        epubDataSource.getMetadata().let {
+            titleText.text = it.title ?: "title"
+            authorText.text = it.creator ?: "author"
         }
     }
 
