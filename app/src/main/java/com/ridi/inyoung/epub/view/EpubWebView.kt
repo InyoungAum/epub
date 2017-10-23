@@ -307,7 +307,7 @@ class EpubWebView : WebView {
             bodyPaddingTop = if (forPagination) 0 else (height * (0.5f / 2)).toInt()
             bodyPaddingTopWhenFirstSpine = if (forPagination) 0 else 30
             bodyPaddingBottom = if (forPagination) 0 else (height * 0.5f).toInt()
-            bgColor = "white"
+            bgColor = "#ffffff"
             fgColor = "black"
         }
         @Dp

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="start"
-    android:background="#111">
+    android:background="@color/black">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -34,7 +34,7 @@
                 android:textSize="20dp"
                 android:gravity="center"
                 android:padding="4dp"
-                android:textColor="#e6e6e6"
+                android:textColor="@color/white"
                 android:text="[title]"/>
 
             <TextView
@@ -44,7 +44,7 @@
                 android:textSize="12dp"
                 android:gravity="right"
                 android:padding="4dp"
-                android:textColor="#e6e6e6"
+                android:textColor="@color/white"
                 android:text="[author]"/>
 
         </LinearLayout>

@@ -23,7 +23,8 @@
 
         </activity>
         
-        <activity android:name=".activity.EpubReaderActivity"/>
+        <activity android:name=".activity.EpubReaderActivity"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
 
         <provider
             android:name="android.support.v4.content.FileProvider"
