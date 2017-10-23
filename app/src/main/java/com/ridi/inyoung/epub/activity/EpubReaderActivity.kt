@@ -13,6 +13,7 @@ import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.RelativeLayout
 import android.widget.TextView
+import com.ridi.books.helper.Log
 import com.ridi.books.helper.view.findLazy
 import com.ridi.inyoung.epub.BuildConfig
 import com.ridi.inyoung.epub.R
@@ -25,7 +26,7 @@ import com.ridi.inyoung.epub.view.EpubPager
 import com.ridi.inyoung.epub.view.EpubWebView
 import com.ridi.inyoung.epub.view.NavPointAdapter
 
-class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.PageChangeListener{
+class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.ScrollChangeListener {
     companion object {
         val KEY_BOOK_NAME = "book_name"
     }
@@ -38,11 +39,12 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
     private val loadingText by findLazy<TextView>(R.id.loadingText)
     private val titleText by findLazy<TextView>(R.id.titleText)
     private val authorText by findLazy<TextView>(R.id.authorText)
+    private val pageCountText by findLazy<TextView>(R.id.pageCountText)
 
     lateinit var context: EpubParser.Context
     lateinit var epubPager: EpubPager
     lateinit var epubDataSource: EpubDataSource
-    var currentOffset = 0
+    private var currentOffset = 0
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,7 +75,7 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
     private fun setEpubWebView(context: EpubParser.Context) {
         webView.context = context
         webView.forPagination = false
-        webView.pageChangeListener = this
+        webView.scrollChangeListener = this
     }
 
     private fun generatePager(context: EpubParser.Context) {
@@ -124,6 +126,19 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
                 Handler().postDelayed ({
                     loadingLayout.visibility = GONE
                 }, 300)
+            }
+        }
+    }
+
+    override fun onScrollChanged(y: Int, currentSpineIndex: Int) {
+        epubPager.run {
+            val prevPageCount = if (currentSpineIndex != 0)
+                pageIndexes[currentSpineIndex - 1]
+            else 0
+
+            getCurrentPagePosition(y).let {
+                Log.d("page","page : $it")
+                pageCountText.text =  "${(it + prevPageCount)} / $totalPageCount"
             }
         }
     }

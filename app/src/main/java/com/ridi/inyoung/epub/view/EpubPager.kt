@@ -13,6 +13,10 @@ class EpubPager constructor(val pagingListener: PagingListener, val epubWebView:
     }
 
     val pageIndexes: MutableList<Int> = ArrayList()
+    var totalPageCount: Int = 0
+        private set
+    get() = pageIndexes[pageIndexes.size - 1]
+
     private val navPointIndexes: MutableList<Float> = ArrayList()
     private val jsInterface = DisposableJSInterface()
     private var spines: List<EpubSpine>
@@ -34,6 +38,9 @@ class EpubPager constructor(val pagingListener: PagingListener, val epubWebView:
     fun startPaging() {
         loadSpine()
     }
+
+    fun getCurrentPagePosition(y: Int): Int =
+            (y.toFloat() / epubWebView.height.toFloat() + 1f).toInt()
 
     private fun loadSpine(index: Int = 0) {
         epubWebView.loadSpine(index)

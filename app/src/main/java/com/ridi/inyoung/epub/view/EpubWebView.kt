@@ -22,10 +22,13 @@ import kotlin.properties.Delegates
  */
 
 class EpubWebView : WebView {
-    interface PageChangeListener {
+    interface ScrollChangeListener {
         fun onPrevSpine(spineIndex: Int)
         fun onNextSpine(spineIndex: Int)
+        fun onScrollChanged(y: Int, currentSpineIndex: Int)
     }
+
+
     private val CHROME_51 = 270400000
 
     constructor(context: Context) : super(context)
@@ -35,7 +38,7 @@ class EpubWebView : WebView {
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
     lateinit var context: EpubParser.Context
-    lateinit var pageChangeListener: PageChangeListener
+    lateinit var scrollChangeListener: ScrollChangeListener
     lateinit var renderingContext: RenderingContext
 
     var forPagination = false
@@ -158,16 +161,18 @@ class EpubWebView : WebView {
         if (scrollY <= 0) {
             if (currentSpineIndex > 0) {
                 currentSpineIndex--
-                pageChangeListener.onPrevSpine(currentSpineIndex)
+                scrollChangeListener.onPrevSpine(currentSpineIndex)
             }
         }
 
         if (scrollY + measuredHeight >= contentHeight * scale) {
             if (currentSpineIndex < context.spines.size - 1) {
                 currentSpineIndex++
-                pageChangeListener.onNextSpine(currentSpineIndex)
+                scrollChangeListener.onNextSpine(currentSpineIndex)
             }
         }
+
+        scrollChangeListener.onScrollChanged(t + 1, currentSpineIndex)
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -201,9 +206,6 @@ class EpubWebView : WebView {
     }
 
     fun scrollToPageOffset(pageOffset: Int) {
-/*        val padding = getBodyPaddingTop(renderingContext)
-        val offset = Math.max(
-                ((pageOffset - 1) * renderingContext.height) - padding, padding)*/
         injectJs("scrollByOffset($pageOffset)")
     }
 
