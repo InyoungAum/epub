@@ -13,7 +13,6 @@ import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.RelativeLayout
 import android.widget.TextView
-import com.ridi.books.helper.Log
 import com.ridi.books.helper.view.findLazy
 import com.ridi.inyoung.epub.BuildConfig
 import com.ridi.inyoung.epub.R
@@ -115,7 +114,7 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
     }
 
     private fun loadBook() {
-        webView.loadSpine(1)
+        webView.loadSpine()
         webView.webViewClient = object: WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
@@ -146,15 +145,6 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
         webView.run {
             loadJsModule()
             scrollToPageOffset(offset)
-
-            /* if (offset != 0) {
-                 scrollYPosition(
-                         contentHeight - height
-                 )
-             } else {
-                 scrollToPageOffset(offset)
-             }*/
         }
     }
-
 }

@@ -148,15 +148,15 @@ class EpubWebView : WebView {
         if (scrollY <= 0) {
             if (currentSpineIndex > 0) {
                 currentSpineIndex--
+                pageChangeListener.onPrevSpine(currentSpineIndex)
             }
-            pageChangeListener.onPrevSpine(currentSpineIndex)
         }
 
         if (scrollY + measuredHeight >= contentHeight * scale) {
             if (currentSpineIndex < context.spines.size - 1) {
                 currentSpineIndex++
+                pageChangeListener.onNextSpine(currentSpineIndex)
             }
-            pageChangeListener.onNextSpine(currentSpineIndex)
         }
     }
 
