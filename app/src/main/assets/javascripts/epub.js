@@ -44,3 +44,8 @@ function scrollByOffset(offset) {
     window.scrollTo(0, amount)
 }
 
+function scrollToAnchor(anchor) {
+    var top = document.getElementById(anchor).offsetTop; //Getting Y of target element
+    window.scrollTo(0, top);
+    //location.hash = "#" + anchor;
+}

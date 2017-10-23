@@ -108,7 +108,9 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
         val navPointAdapter = NavPointAdapter(this, R.layout.navpoint_drawer_menu, navpoints)
         menuList.adapter = navPointAdapter
         menuList.setOnItemClickListener { _, _, position, _ ->
-            webView.loadSpine(navpoints[position].spineIndex)
+            navpoints[position].run {
+                webView.loadSpine(spineIndex, anchor)
+            }
             drawerLayout.closeDrawers()
         }
     }
@@ -144,7 +146,9 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Pa
     private fun spineLoaded(offset: Int) {
         webView.run {
             loadJsModule()
-            scrollToPageOffset(offset)
+            currentAnchor?.let {
+                loadAnchor()
+            } ?: scrollToPageOffset(offset)
         }
     }
 }

@@ -39,6 +39,8 @@ class EpubWebView : WebView {
     lateinit var renderingContext: RenderingContext
 
     var forPagination = false
+    var currentAnchor: String? = null
+     private set
 
     private var dragging = false
     private var scrolling = false
@@ -108,9 +110,10 @@ class EpubWebView : WebView {
 
     }
 
-    fun loadSpine(index: Int = 0) {
+    fun loadSpine(index: Int = 0, anchor: String? = null) {
         preScrollPosY = 0
         currentSpineIndex = index
+        currentAnchor = anchor
         scrolling = false
         dragging = false
         spineLoaded = true
@@ -126,6 +129,13 @@ class EpubWebView : WebView {
             loadDataWithBaseURL(curSpine.baseUrl, html, "text/html", "UTF-8", null)
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    fun loadAnchor() {
+        currentAnchor?.let {
+            injectJs("scrollToAnchor('$it')")
+            currentAnchor = null
         }
     }
 
