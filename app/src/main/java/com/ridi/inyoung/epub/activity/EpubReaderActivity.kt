@@ -61,6 +61,8 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Sc
             finish()
         })
 
+        loadingLayout.setOnTouchListener({ _, _ -> true })
+
         epubDataSource = EpubDataSource(bookName)
         setContext()
         setMetaData()
