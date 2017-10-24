@@ -3,20 +3,24 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/contentLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/black">
+    
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="BookShelf"
+        android:textColor="@color/white"
+        android:gravity="center"
+        android:textSize="20dp"
+        android:background="@color/colorPrimary" />
 
-    <Button
-        android:id="@+id/book1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="book1"/>
-
-    <Button
-        android:id="@+id/book2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="book12"
-        android:layout_alignParentTop="true"
-        android:layout_toEndOf="@+id/book1" />
+    <ListView
+        android:id="@+id/bookShelf"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/textView" />
 
 </RelativeLayout>

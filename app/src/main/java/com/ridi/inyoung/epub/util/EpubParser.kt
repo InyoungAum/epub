@@ -319,5 +319,6 @@ object EpubParser {
         var title: String? = null
         var creator: String? = null
         var coverFile: File? = null
+        var originName: String? = null
     }
 }

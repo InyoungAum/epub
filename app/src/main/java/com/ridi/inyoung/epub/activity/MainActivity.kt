@@ -4,10 +4,14 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.ListView
 import com.ridi.books.helper.Log
 import com.ridi.books.helper.view.findLazy
 import com.ridi.inyoung.epub.EPubApplication
 import com.ridi.inyoung.epub.R
+import com.ridi.inyoung.epub.model.EpubDataSource
+import com.ridi.inyoung.epub.util.EpubParser
+import com.ridi.inyoung.epub.view.BookshelfAdapter
 import org.apache.commons.compress.archivers.zip.ZipFile
 import java.io.BufferedInputStream
 import java.io.File
@@ -19,26 +23,13 @@ class MainActivity: Activity() {
         val defaultBookFile = File(EPubApplication.instance.filesDir, "EPub")
     }
 
-    private val book1 by findLazy<Button>(R.id.book1)
-    private val book2 by findLazy<Button>(R.id.book2)
-
+    private val bookShelf by findLazy<ListView>(R.id.bookShelf)
+    private val metaDatas: ArrayList<EpubParser.Metadata> = ArrayList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         findRawList()
-
-        book1.setOnClickListener({
-            val intent = Intent(this, EpubReaderActivity::class.java)
-            intent.putExtra(EpubReaderActivity.KEY_BOOK_NAME, "book1")
-            startActivity(intent)
-        })
-
-        book2.setOnClickListener({
-            val intent = Intent(this, EpubReaderActivity::class.java)
-            intent.putExtra(EpubReaderActivity.KEY_BOOK_NAME, "pr")
-            startActivity(intent)
-        })
     }
 
     private fun findRawList() {
@@ -50,6 +41,23 @@ class MainActivity: Activity() {
                     field.name)?.let {
                 unzip(it, defaultBookFile.absolutePath + "/${field.name}")
             }
+            metaDatas.add(EpubDataSource(field.name).getMetadata().apply {
+                originName = field.name
+            })
+            setBookshelf()
+        }
+    }
+
+    private fun setBookshelf() {
+        BookshelfAdapter(this, R.layout.bookshelf_list, metaDatas).let {
+            bookShelf.adapter = it
+            it.notifyDataSetChanged()
+        }
+
+        bookShelf.setOnItemClickListener { _, _, position, _ ->
+            val intent = Intent(this, EpubReaderActivity::class.java)
+            intent.putExtra(EpubReaderActivity.KEY_BOOK_NAME, metaDatas[position].originName)
+            startActivity(intent)
         }
     }
 
