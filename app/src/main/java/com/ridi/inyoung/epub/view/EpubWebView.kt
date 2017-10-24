@@ -5,6 +5,7 @@ import android.os.Build
 import android.support.annotation.Dimension
 import android.support.v4.view.ViewCompat
 import android.util.AttributeSet
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.*
@@ -27,7 +28,9 @@ class EpubWebView : WebView {
         fun onNextSpine(spineIndex: Int)
         fun onScrollChanged(y: Int, currentSpineIndex: Int)
     }
-
+    interface GestureListener {
+        fun onSingleTapUp()
+    }
 
     private val CHROME_51 = 270400000
 
@@ -39,12 +42,14 @@ class EpubWebView : WebView {
 
     lateinit var context: EpubParser.Context
     lateinit var scrollChangeListener: ScrollChangeListener
+    lateinit var gestureListener: GestureListener
     lateinit var renderingContext: RenderingContext
 
     var forPagination = false
     var currentAnchor: String? = null
      private set
 
+    private val gestureDetector: GestureDetector
     private var dragging = false
     private var scrolling = false
     private var currentSpineIndex = 0
@@ -105,6 +110,14 @@ class EpubWebView : WebView {
                 }
             }
         }
+
+        gestureDetector = GestureDetector(getContext(),
+                object: GestureDetector.SimpleOnGestureListener() {
+                    override fun onSingleTapUp(e: MotionEvent?): Boolean {
+                        gestureListener.onSingleTapUp()
+                        return super.onSingleTapUp(e)
+                    }
+                })
     }
 
     override fun onSizeChanged(w: Int, h: Int, ow: Int, oh: Int) {
@@ -177,6 +190,7 @@ class EpubWebView : WebView {
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         val action = event?.action
+        gestureDetector.onTouchEvent(event)
         when (action) {
             MotionEvent.ACTION_MOVE ->
                 if (dragging.not()) {

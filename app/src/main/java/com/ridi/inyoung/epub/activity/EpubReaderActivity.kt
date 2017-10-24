@@ -1,5 +1,6 @@
 package com.ridi.inyoung.epub.activity
 
+import android.animation.Animator
 import android.app.Activity
 import android.os.Build
 import android.os.Bundle
@@ -25,7 +26,8 @@ import com.ridi.inyoung.epub.view.EpubPager
 import com.ridi.inyoung.epub.view.EpubWebView
 import com.ridi.inyoung.epub.view.NavPointAdapter
 
-class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.ScrollChangeListener {
+class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.ScrollChangeListener,
+        EpubWebView.GestureListener{
     companion object {
         val KEY_BOOK_NAME = "book_name"
     }
@@ -39,6 +41,7 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Sc
     private val titleText by findLazy<TextView>(R.id.titleText)
     private val authorText by findLazy<TextView>(R.id.authorText)
     private val pageCountText by findLazy<TextView>(R.id.pageCountText)
+    private val naviBar by findLazy<RelativeLayout>(R.id.naviBar)
 
     lateinit var context: EpubParser.Context
     lateinit var epubPager: EpubPager
@@ -69,6 +72,44 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Sc
         generatePager(context)
     }
 
+    private fun showUI() {
+        naviBar.animate().run {
+            alpha(1.0f)
+            duration = 500
+            setListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {}
+
+                override fun onAnimationCancel(animation: Animator?) {}
+
+                override fun onAnimationStart(animation: Animator?) {
+                    naviBar.visibility = VISIBLE
+                }
+
+                override fun onAnimationEnd(animation: Animator?) {}
+            })
+        }
+        pageCountText.visibility = VISIBLE
+    }
+
+    private fun hideUI() {
+        naviBar.animate().run {
+            alpha(0.0f)
+            duration = 500
+            setListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {}
+
+                override fun onAnimationCancel(animation: Animator?) {}
+
+                override fun onAnimationStart(animation: Animator?) {}
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    naviBar.visibility = GONE
+                }
+            })
+        }
+        pageCountText.visibility = GONE
+    }
+
     private fun setContext() {
         context = epubDataSource.parseEpub()
     }
@@ -77,6 +118,7 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Sc
         webView.context = context
         webView.forPagination = false
         webView.scrollChangeListener = this
+        webView.gestureListener = this
     }
 
     private fun generatePager(context: EpubParser.Context) {
@@ -141,6 +183,15 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Sc
             getCurrentPagePosition(y).let {
                 pageCountText.text =  "${(it + prevPageCount)} / $totalPageCount"
             }
+        }
+        hideUI()
+    }
+
+    override fun onSingleTapUp() {
+        if (naviBar.visibility == VISIBLE) {
+            hideUI()
+        } else {
+            showUI()
         }
     }
 
