@@ -302,7 +302,7 @@ class EpubWebView : WebView {
         val bgColor: String
         val fgColor: String
         init {
-            columnWidth= Math.round(pixelToDip(context, canvasWidth.toFloat()))
+            columnWidth = Math.round(pixelToDip(context, canvasWidth.toFloat()))
             height = Math.round(pixelToDip(context, canvasHeight.toFloat()))
             columnGap = if (forPagination) 0 else 10
             bodyMarginBottom = 0

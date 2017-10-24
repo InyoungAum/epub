@@ -12,7 +12,8 @@ function getCurrentScrollHeight() {
 }
 
 function calcPageCount() {
-    return Math.round(getScrollHeight() / getScreenHeight() - 0.5)
+    return Math.round((getScrollHeight() - getBodyPaddingTop() - getBodyPaddingBottom()) /
+                        getScreenHeight() - 0.5)
 }
 
 function scrollAbsY(y) {
@@ -21,12 +22,12 @@ function scrollAbsY(y) {
 
 function getBodyPaddingTop() {
     var body = document.getElementsByTagName('body')[0];
-    return window.getComputedStyle(body, null).getPropertyValue('padding-top')
+    return parseInt(window.getComputedStyle(body, null).getPropertyValue('padding-top'))
 }
 
 function getBodyPaddingBottom() {
     var body = document.getElementsByTagName('body')[0];
-    return window.getComputedStyle(body, null).getPropertyValue('padding-bottom')
+    return parseInt(window.getComputedStyle(body, null).getPropertyValue('padding-bottom'))
 }
 
 function scrollByOffset(offset) {
@@ -36,16 +37,16 @@ function scrollByOffset(offset) {
 
     if (offset == 0) {
         amount = parseInt(paddingTop, 10)
-    } else if (offset == calcPageCount() - 1) {
-        amount = getScrollHeight() - getScreenHeight() - parseInt(paddingBottom)
+    } else if (offset == calcPageCount()) {
+        amount = getScrollHeight() - getScreenHeight() - paddingBottom
     } else {
-        amount = offset * getScreenHeight() + parseInt(paddingTop)
+        amount = offset * getScreenHeight() + paddingTop
     }
+
     window.scrollTo(0, amount)
 }
 
 function scrollToAnchor(anchor) {
-    var top = document.getElementById(anchor).offsetTop; //Getting Y of target element
+    var top = document.getElementById(anchor).offsetTop;
     window.scrollTo(0, top);
-    //location.hash = "#" + anchor;
 }

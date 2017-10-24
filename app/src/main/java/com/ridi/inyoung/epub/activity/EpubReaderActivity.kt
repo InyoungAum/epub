@@ -13,7 +13,6 @@ import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.RelativeLayout
 import android.widget.TextView
-import com.ridi.books.helper.Log
 import com.ridi.books.helper.view.findLazy
 import com.ridi.inyoung.epub.BuildConfig
 import com.ridi.inyoung.epub.R
@@ -125,6 +124,7 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Sc
                 spineLoaded(currentOffset)
                 Handler().postDelayed ({
                     loadingLayout.visibility = GONE
+                    spineLoaded(currentOffset)
                 }, 300)
             }
         }
@@ -137,7 +137,6 @@ class EpubReaderActivity : Activity(), EpubPager.PagingListener , EpubWebView.Sc
             else 0
 
             getCurrentPagePosition(y).let {
-                Log.d("page","page : $it")
                 pageCountText.text =  "${(it + prevPageCount)} / $totalPageCount"
             }
         }

@@ -4,6 +4,7 @@ import android.os.Handler
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import com.ridi.books.helper.Log
 import com.ridi.inyoung.epub.model.EpubSpine
 
 class EpubPager constructor(val pagingListener: PagingListener, val epubWebView: EpubWebView) {
@@ -61,7 +62,6 @@ class EpubPager constructor(val pagingListener: PagingListener, val epubWebView:
             loadSpine(pageIndexes.size)
         } else {
             jsInterface.dispose()
-
             epubWebView.removeJavascriptInterface("android")
             epubWebView.stopLoading()
             pagingListener.onCompletePaging()
