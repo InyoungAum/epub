@@ -10,7 +10,42 @@ import java.util.*
 
 
 object EpubParser {
-    private val CONTAINER_PATH = File.separator + "META-INF" + File.separator + "container.xml"
+    private val CONTAINER_PATH =  "${File.separator}META-INF${File.separator}container.xml"
+
+    @Throws(Exception::class)
+    fun parseReaderData(baseDir: File): Context {
+        parseSpine(baseDir).let {
+            try {
+                parseNcx(it)
+                return it
+            } catch (e: Exception) {
+                throw Exception("Failed to parse EPUB directory: $baseDir", e)
+            }
+        }
+    }
+
+    @Throws(Exception::class)
+    fun parseMetadata(baseDir: File): Metadata {
+        parseBaseData(baseDir).let {
+            try {
+                return parseMetadata(it)
+            } catch (e: Exception) {
+                throw Exception("Failed to parse EPUB directory: $baseDir", e)
+            }
+        }
+    }
+
+    @Throws(Exception::class)
+    private fun parseSpine(baseDir: File): Context {
+        parseBaseData(baseDir).let {
+            try {
+                parseSpine(it)
+                return it
+            } catch (e: Exception) {
+                throw Exception("Failed to parse EPUB directory: $baseDir", e)
+            }
+        }
+    }
 
     @Throws(Exception::class)
     private fun parseBaseData(baseDir: File): Context {
@@ -22,42 +57,7 @@ object EpubParser {
                 return it
             }
         } catch (e: Exception) {
-            throw Exception("Failed to parse EPUB directory: " + baseDir, e)
-        }
-    }
-
-    @Throws(Exception::class)
-    fun parseSpine(baseDir: File): Context {
-        parseBaseData(baseDir).let {
-            try {
-                parseSpine(it)
-                return it
-            } catch (e: Exception) {
-                throw Exception("Failed to parse EPUB directory: " + baseDir, e)
-            }
-        }
-    }
-
-    @Throws(Exception::class)
-    fun parseReaderData(baseDir: File): Context {
-        parseSpine(baseDir).let {
-            try {
-                parseNcx(it)
-                return it
-            } catch (e: Exception) {
-                throw Exception("Failed to parse EPUB directory: " + baseDir, e)
-            }
-        }
-    }
-
-    @Throws(Exception::class)
-    fun parseMetadata(baseDir: File): Metadata {
-        parseBaseData(baseDir).let {
-            try {
-                return parseMetadata(it)
-            } catch (e: Exception) {
-                throw Exception("Failed to parse EPUB directory: " + baseDir, e)
-            }
+            throw Exception("Failed to parse EPUB directory: $baseDir" , e)
         }
     }
 
@@ -277,7 +277,7 @@ object EpubParser {
                 spine.addNavPoint(navPoint)
                 index++
             } else {
-                err("Spine for nav point not found: " + contentSrc!!)
+                err("Spine for nav point not found: $contentSrc")
             }
             clearNavPointToPush()
         }

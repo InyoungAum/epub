@@ -89,7 +89,7 @@ class MainActivity: Activity() {
         }
 
         inputStream.use {
-            file.outputStream().buffered(8192).use { out ->
+            file.outputStream().buffered(1024).use { out ->
                 inputStream.copyTo(out)
             }
         }

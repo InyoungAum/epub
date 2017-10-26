@@ -58,7 +58,7 @@ class EpubWebView : WebView {
     private var scrollTask: Runnable by Delegates.notNull()
 
     init {
-        setHorizontalScrollBarEnabled(false)
+        isHorizontalScrollBarEnabled = false
         isVerticalScrollBarEnabled = false
         setVerticalScrollbarOverlay(true)
         overScrollMode = View.OVER_SCROLL_NEVER

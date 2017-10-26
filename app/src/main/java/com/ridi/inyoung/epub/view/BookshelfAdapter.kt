@@ -28,8 +28,6 @@ class BookshelfAdapter constructor(context: Context, val resource: Int, val data
             view?.findViewById<ImageView>(R.id.bookImage)?.setImageBitmap(it)
         }
 
-
-
         return view!!
     }
 }
